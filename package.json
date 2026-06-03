@@ -5,7 +5,8 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-"build": "electron-builder --win --x64 --publish never"  },
+    "build": "electron-builder --win --x64 --publish never"
+  },
   "dependencies": {
     "electron-store": "^8.1.0"
   },
