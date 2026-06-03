@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Teizer Notes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap');
+
+:root {
+  --bg:       #0c0c10;
+  --bg1:      #111116;
+  --bg2:      #16161d;
+  --bg3:      #1c1c25;
+  --bg4:      #22222e;
+  --surface:  #1e1e28;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.1);
+  --accent:   #7c6ef5;
+  --accent2:  #9d8fff;
+  --accent3:  rgba(124,110,245,0.15);
+  --gold:     #d4a853;
+  --gold2:    rgba(212,168,83,0.15);
+  --red:      #e05555;
+  --green:    #4caf7d;
+  --text:     #e8e8f0;
+  --text2:    #9090a8;
+  --text3:    #55556a;
+  --radius:   10px;
+  --font:     'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+/* ── TITLEBAR ── */
+.titlebar {
+  height: 40px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+.titlebar-logo {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 16px;
+  -webkit-app-region: no-drag;
+  border-right: 1px solid var(--border);
+  height: 100%;
+}
+.logo-icon {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white;
+}
+.logo-text { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: 0.3px; }
+.titlebar-search {
+  flex: 1; padding: 0 16px;
+  display: flex; align-items: center; gap: 8px;
+  -webkit-app-region: no-drag;
+}
+.search-input {
+  flex: 1; max-width: 340px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  font-family: var(--font); font-size: 13px;
+  padding: 5px 12px;
+  outline: none; transition: border 0.2s;
+}
+.search-input::placeholder { color: var(--text3); }
+.search-input:focus { border-color: var(--accent); }
+
+.titlebar-center { flex: 1; text-align: center; font-size: 12px; color: var(--text3); letter-spacing: 1px; pointer-events: none; }
+.win-controls { display: flex; -webkit-app-region: no-drag; height: 100%; }
+.win-btn { width: 46px; height: 100%; background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 16px; transition: background 0.15s, color 0.15s; display: flex; align-items: center; justify-content: center; }
+.win-btn:hover { background: var(--bg3); color: var(--text); }
+.win-btn.close:hover { background: var(--red); color: white; }
+
+/* ── LAYOUT ── */
+.layout { display: flex; height: calc(100vh - 40px); overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-top { padding: 12px; border-bottom: 1px solid var(--border); }
+.new-note-btn {
+  width: 100%; padding: 9px 12px;
+  background: var(--accent); border: none; border-radius: var(--radius);
+  color: white; font-family: var(--font); font-size: 13px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity 0.2s;
+}
+.new-note-btn:hover { opacity: 0.9; }
+
+.section-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text3);
+  padding: 12px 14px 6px; text-transform: uppercase;
+}
+.cat-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; cursor: pointer;
+  color: var(--text2); font-size: 13px; border-radius: 6px; margin: 1px 6px;
+  transition: all 0.15s; position: relative;
+}
+.cat-item:hover { background: var(--bg3); color: var(--text); }
+.cat-item.active { background: var(--accent3); color: var(--accent2); }
+.cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.cat-count { margin-left: auto; font-size: 11px; background: var(--bg4); padding: 1px 6px; border-radius: 10px; }
+
+.notes-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.notes-list::-webkit-scrollbar { width: 3px; }
+.notes-list::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+.note-item {
+  padding: 9px 14px; cursor: pointer; margin: 1px 6px; border-radius: 8px;
+  transition: background 0.15s; border: 1px solid transparent;
+}
+.note-item:hover { background: var(--bg3); }
+.note-item.active { background: var(--bg3); border-color: var(--border2); }
+.note-item-title { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note-item.active .note-item-title { color: var(--accent2); }
+.note-item-preview { font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note-item-date { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+.sidebar-bottom { padding: 10px; border-top: 1px solid var(--border); }
+.settings-btn {
+  width: 100%; padding: 7px 12px;
+  background: transparent; border: 1px solid var(--border2);
+  border-radius: var(--radius); color: var(--text2); font-family: var(--font); font-size: 12px;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.settings-btn:hover { background: var(--bg3); color: var(--text); }
+
+/* ── EDITOR ── */
+.editor-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg1); flex-shrink: 0;
+}
+.toolbar-left { display: flex; align-items: center; gap: 6px; flex: 1; }
+.toolbar-right { display: flex; align-items: center; gap: 6px; }
+
+.note-title-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--text); font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 600; letter-spacing: 0.2px;
+}
+.note-title-input::placeholder { color: var(--text3); }
+
+.cat-badge {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 500; flex-shrink: 0;
+}
+.cat-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); font-family: var(--font); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; outline: none; cursor: pointer;
+}
+.cat-select option { background: var(--bg2); }
+
+.tbar-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text2); font-size: 13px;
+  width: 30px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.tbar-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+.tbar-btn.active { background: var(--accent3); color: var(--accent2); border-color: var(--accent); }
+.tbar-btn.danger:hover { background: rgba(224,85,85,0.15); color: var(--red); border-color: var(--red); }
+
+/* TAGS */
+.tags-bar {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 6px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg1); flex-shrink: 0; min-height: 36px;
+}
+.tag-chip {
+  font-size: 11px; padding: 2px 10px; border-radius: 20px;
+  background: var(--bg4); color: var(--text2); border: 1px solid var(--border2);
+  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+}
+.tag-chip:hover { border-color: var(--red); color: var(--red); }
+.tag-input {
+  background: transparent; border: 1px dashed var(--border2);
+  border-radius: 20px; color: var(--text); font-family: var(--font);
+  font-size: 11px; padding: 2px 10px; outline: none; width: 90px;
+}
+.tag-input::placeholder { color: var(--text3); }
+.tag-input:focus { border-color: var(--accent); }
+
+/* EDITOR AREA */
+.editor-body { flex: 1; overflow: hidden; position: relative; }
+.editor-area {
+  width: 100%; height: 100%;
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-family: var(--font); font-size: 15px;
+  line-height: 1.8; padding: 24px 28px;
+  resize: none; letter-spacing: 0.2px;
+}
+.editor-area::placeholder { color: var(--text3); }
+.editor-area::-webkit-scrollbar { width: 4px; }
+.editor-area::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* T9 SUGGESTIONS */
+.t9-bar {
+  display: none; align-items: center; gap: 6px;
+  padding: 6px 20px; border-top: 1px solid var(--border);
+  background: var(--bg2); flex-shrink: 0; min-height: 36px;
+}
+.t9-bar.visible { display: flex; }
+.t9-label { font-size: 11px; color: var(--text3); margin-right: 4px; }
+.t9-chip {
+  font-size: 12px; padding: 3px 12px; border-radius: 20px;
+  background: var(--bg4); color: var(--text2);
+  border: 1px solid var(--border2); cursor: pointer; transition: all 0.15s;
+}
+.t9-chip:hover { background: var(--accent3); color: var(--accent2); border-color: var(--accent); }
+
+/* STATUSBAR */
+.statusbar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 5px 20px; border-top: 1px solid var(--border);
+  background: var(--bg1); flex-shrink: 0; font-size: 11px; color: var(--text3);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+.status-dot.saving { background: var(--gold); animation: pulse 0.8s infinite; }
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+/* VOICE BUTTON */
+.voice-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text2); font-size: 11px;
+  padding: 4px 10px; cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: all 0.2s; font-family: var(--font); flex-shrink: 0;
+}
+.voice-btn:hover { background: var(--bg3); color: var(--text); }
+.voice-btn.listening {
+  background: rgba(224,85,85,0.15); color: var(--red);
+  border-color: var(--red); animation: voicePulse 1s ease-in-out infinite;
+}
+@keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.voice-ripple { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── AI PANEL ── */
+.ai-panel {
+  width: 300px; flex-shrink: 0;
+  background: var(--bg1); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ai-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ai-title { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.ai-badge { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: aiBlink 2s ease-in-out infinite; }
+@keyframes aiBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.ai-toggle { background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: 16px; transition: color 0.15s; }
+.ai-toggle:hover { color: var(--text); }
+
+.ai-quick-btns { padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 5px; border-bottom: 1px solid var(--border); }
+.ai-quick-btn {
+  font-size: 11px; padding: 4px 10px; border-radius: 20px;
+  background: var(--bg3); color: var(--text2); border: 1px solid var(--border2);
+  cursor: pointer; transition: all 0.15s; font-family: var(--font);
+}
+.ai-quick-btn:hover { background: var(--accent3); color: var(--accent2); border-color: var(--accent); }
+
+.ai-messages { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+.ai-messages::-webkit-scrollbar { width: 3px; }
+.ai-messages::-webkit-scrollbar-thumb { background: var(--bg4); }
+
+.ai-msg { display: flex; flex-direction: column; gap: 3px; }
+.ai-msg-role { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.ai-msg.user .ai-msg-role { color: var(--accent2); }
+.ai-msg.assistant .ai-msg-role { color: var(--gold); }
+.ai-msg-text {
+  font-size: 13px; line-height: 1.6; color: var(--text2);
+  background: var(--bg3); border-radius: 8px; padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+.ai-msg.user .ai-msg-text { background: var(--accent3); border-color: rgba(124,110,245,0.2); color: var(--text); }
+.ai-typing { display: flex; gap: 4px; align-items: center; padding: 8px 10px; }
+.ai-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: typing 1.2s infinite; }
+.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+.ai-input-row { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; gap: 6px; }
+.ai-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 13px;
+  padding: 7px 10px; outline: none; resize: none; height: 36px; transition: border 0.2s;
+}
+.ai-input::placeholder { color: var(--text3); }
+.ai-input:focus { border-color: var(--accent); }
+.ai-send-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--accent); border: none; color: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  transition: opacity 0.2s; flex-shrink: 0;
+}
+.ai-send-btn:hover { opacity: 0.85; }
+.ai-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.no-key-notice {
+  padding: 14px 12px; font-size: 12px; color: var(--text3); line-height: 1.6; text-align: center;
+}
+.no-key-notice a { color: var(--accent2); cursor: pointer; text-decoration: underline; }
+
+/* ── SETTINGS PANEL ── */
+.settings-overlay {
+  display: none; position: absolute; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+}
+.settings-overlay.show { display: flex; }
+.settings-modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 28px; width: 400px; max-height: 80vh; overflow-y: auto;
+}
+.settings-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+.setting-group { margin-bottom: 18px; }
+.setting-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; letter-spacing: 0.5px; }
+.setting-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 13px;
+  padding: 9px 12px; outline: none; transition: border 0.2s;
+}
+.setting-input:focus { border-color: var(--accent); }
+.setting-input::placeholder { color: var(--text3); }
+.settings-hint { font-size: 11px; color: var(--text3); margin-top: 5px; line-height: 1.5; }
+.settings-btns { display: flex; gap: 8px; margin-top: 6px; }
+.btn-save {
+  flex: 1; padding: 9px; border-radius: 8px;
+  background: var(--accent); border: none; color: white;
+  font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-save:hover { opacity: 0.9; }
+.btn-cancel {
+  flex: 1; padding: 9px; border-radius: 8px;
+  background: transparent; border: 1px solid var(--border2); color: var(--text2);
+  font-family: var(--font); font-size: 13px; cursor: pointer; transition: background 0.2s;
+}
+.btn-cancel:hover { background: var(--bg3); }
+
+/* EMPTY STATE */
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  color: var(--text3); text-align: center; padding: 40px;
+}
+.empty-icon { font-size: 40px; margin-bottom: 4px; }
+.empty-title { font-size: 16px; font-weight: 500; color: var(--text2); }
+.empty-sub { font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <div class="titlebar-logo">
+    <div class="logo-icon">T</div>
+    <span class="logo-text">Teizer Notes</span>
+  </div>
+  <div class="titlebar-search">
+    <input class="search-input" id="searchInput" type="text" placeholder="🔍  Search notes..." oninput="filterNotes()">
+  </div>
+  <div class="titlebar-center" id="titleStatus">TEIZER // NOTES</div>
+  <div class="win-controls">
+    <button class="win-btn" onclick="window.teizerAPI.minimize()">─</button>
+    <button class="win-btn" onclick="window.teizerAPI.maximize()">□</button>
+    <button class="win-btn close" onclick="window.teizerAPI.close()">✕</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <button class="new-note-btn" onclick="openNewNoteDialog()">
+        <span>＋</span> New Note
+      </button>
+    </div>
+
+    <div class="section-label">Categories</div>
+    <div class="cat-item active" data-cat="all" onclick="selectCat('all')">
+      <div class="cat-dot" style="background:var(--accent)"></div>
+      All Notes <span class="cat-count" id="cnt-all">0</span>
+    </div>
+    <div class="cat-item" data-cat="work" onclick="selectCat('work')">
+      <div class="cat-dot" style="background:#d4a853"></div>
+      Work <span class="cat-count" id="cnt-work">0</span>
+    </div>
+    <div class="cat-item" data-cat="ideas" onclick="selectCat('ideas')">
+      <div class="cat-dot" style="background:#4c9fe0"></div>
+      Ideas <span class="cat-count" id="cnt-ideas">0</span>
+    </div>
+    <div class="cat-item" data-cat="personal" onclick="selectCat('personal')">
+      <div class="cat-dot" style="background:#e05555"></div>
+      Personal <span class="cat-count" id="cnt-personal">0</span>
+    </div>
+    <div class="cat-item" data-cat="misc" onclick="selectCat('misc')">
+      <div class="cat-dot" style="background:#4caf7d"></div>
+      Misc <span class="cat-count" id="cnt-misc">0</span>
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Notes</div>
+    <div class="notes-list" id="notesList"></div>
+
+    <div class="sidebar-bottom">
+      <button class="settings-btn" onclick="openSettings()">⚙ Settings &amp; API Key</button>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor-wrap" id="editorWrap">
+    <!-- empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📝</div>
+      <div class="empty-title">No note selected</div>
+      <div class="empty-sub">Create a new note or select one<br>from the sidebar to get started.</div>
+      <button class="new-note-btn" style="width:auto;padding:9px 20px;margin-top:6px" onclick="openNewNoteDialog()">＋ Create Note</button>
+    </div>
+
+    <div id="editorPanel" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <!-- toolbar -->
+      <div class="editor-toolbar">
+        <div class="toolbar-left">
+          <input class="note-title-input" id="noteTitleInput" type="text" placeholder="Note title..." oninput="autoSave()">
+        </div>
+        <div class="toolbar-right">
+          <select class="cat-select" id="noteCatSelect" onchange="autoSave()">
+            <option value="work">Work</option>
+            <option value="ideas">Ideas</option>
+            <option value="personal">Personal</option>
+            <option value="misc">Misc</option>
+          </select>
+          <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">
+            <div class="voice-ripple"></div>
+            <span id="voiceLabel">Voice</span>
+          </button>
+          <button class="tbar-btn danger" onclick="deleteNote()" title="Delete note">🗑</button>
+        </div>
+      </div>
+
+      <!-- tags -->
+      <div class="tags-bar" id="tagsBar">
+        <span style="font-size:11px;color:var(--text3)">Tags:</span>
+        <div id="tagsWrap"></div>
+        <input class="tag-input" id="tagInput" type="text" placeholder="+ add tag" onkeydown="tagKeydown(event)">
+      </div>
+
+      <!-- editor body -->
+      <div class="editor-body">
+        <textarea class="editor-area" id="editorArea" placeholder="Start writing… or click Voice to dictate.&#10;&#10;Tip: ask the AI assistant on the right to help you!" oninput="onEditorInput()"></textarea>
+      </div>
+
+      <!-- T9 bar -->
+      <div class="t9-bar" id="t9Bar">
+        <span class="t9-label">Suggestions:</span>
+        <div id="t9Chips"></div>
+      </div>
+
+      <!-- statusbar -->
+      <div class="statusbar">
+        <span><span class="status-dot" id="statusDot"></span></span>
+        <span id="saveStatus">Saved</span>
+        <span style="margin-left:8px">|</span>
+        <span id="wordCount">0 words</span>
+        <span id="charCount">0 chars</span>
+        <span style="margin-left:auto" id="lastSaved"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-header">
+      <div class="ai-title">
+        <div class="ai-badge"></div>
+        AI Assistant
+      </div>
+      <button class="ai-toggle" onclick="toggleAIPanel()" title="Collapse">›</button>
+    </div>
+    <div class="ai-quick-btns" id="aiQuickBtns">
+      <button class="ai-quick-btn" onclick="aiQuick('Суммаризируй текущую заметку')">Summarize</button>
+      <button class="ai-quick-btn" onclick="aiQuick('Улучши стиль текста в заметке')">Improve style</button>
+      <button class="ai-quick-btn" onclick="aiQuick('Найди идеи связанные с заметкой')">Ideas</button>
+      <button class="ai-quick-btn" onclick="aiQuick('Составь список задач из заметки')">To-do list</button>
+      <button class="ai-quick-btn" onclick="aiQuick('Исправь грамматику в заметке')">Fix grammar</button>
+      <button class="ai-quick-btn" onclick="aiQuick('Переведи заметку на английский')">Translate EN</button>
+    </div>
+    <div class="ai-messages" id="aiMessages">
+      <div class="no-key-notice" id="aiNoKey">
+        <div style="font-size:20px;margin-bottom:8px">🤖</div>
+        <strong style="color:var(--text2)">AI Assistant</strong><br><br>
+        Add your Anthropic API key in <a onclick="openSettings()">Settings</a> to enable the AI assistant.<br><br>
+        <span style="font-size:11px">It can summarize notes, fix grammar, generate ideas and answer questions.</span>
+      </div>
+    </div>
+    <div class="ai-input-row" id="aiInputRow">
+      <textarea class="ai-input" id="aiInput" placeholder="Ask anything…" onkeydown="aiInputKey(event)" rows="1"></textarea>
+      <button class="ai-send-btn" id="aiSendBtn" onclick="sendAIMessage()">➤</button>
+    </div>
+  </div>
+
+</div><!-- layout -->
+
+<!-- SETTINGS MODAL -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <div class="settings-title">⚙ Settings</div>
+    <div class="setting-group">
+      <div class="setting-label">ANTHROPIC API KEY</div>
+      <input class="setting-input" id="apiKeyInput" type="password" placeholder="sk-ant-...">
+      <div class="settings-hint">Get your key at console.anthropic.com — it enables the AI assistant. Stored locally on your device only.</div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">FONT SIZE</div>
+      <input class="setting-input" id="fontSizeInput" type="number" min="12" max="22" value="15">
+    </div>
+    <div class="settings-btns">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
