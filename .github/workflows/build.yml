@@ -11,7 +11,13 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npx electron-builder --win --x64 --publish never
+      - name: Build
+        run: npx electron-builder --win --x64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EP_DRAFT: false
+          EP_PRE_RELEASE: false
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
           name: teizer-notes-installer
